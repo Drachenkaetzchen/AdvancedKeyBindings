@@ -17,5 +17,13 @@ namespace AdvancedKeyBindings.Extensions.MenuExtensions
 
             return reflector.GetField<FarmAnimal>(menu, "animalBeingPurchased").GetValue();
         }
+
+        public static bool IsAnimalPlacementMode(this PurchaseAnimalsMenu menu)
+        {
+            var reflector = StaticReflectionHelper.GetInstance().GetReflector();
+
+            return reflector.GetField<bool>(menu, "onFarm").GetValue() &&
+                   !reflector.GetField<bool>(menu, "namingAnimal").GetValue();
+        }
     }
 }

@@ -10,18 +10,20 @@ using StardewValley.Menus;
 
 namespace AdvancedKeyBindings.KeyHandlers
 {
-    public class PanScreenHandler: IKeyHandler
+    public class PanScreenHandler : IKeyHandler
     {
-        public SButton[] PanScreenScrollLeft { get; }
-        public SButton[] PanScreenScrollRight { get; }
-        public SButton[] PanScreenScrollUp { get; }
-        public SButton[] PanScreenScrollDown { get; }
-        public SButton[] PanScreenPreviousBuilding { get; }
-        public SButton[] PanScreenNextBuilding { get; }
-        private Building _currentBuilding;
-        private readonly IReflectionHelper _reflectionHelper;
+        private SButton[] PanScreenScrollLeft { get; }
+        private SButton[] PanScreenScrollRight { get; }
+        private SButton[] PanScreenScrollUp { get; }
+        private SButton[] PanScreenScrollDown { get; }
+        private SButton[] PanScreenPreviousBuilding { get; }
+        private SButton[] PanScreenNextBuilding { get; }
+        private Building _currentlySelectedBuilding;
+        private List<Building> _currentBuildingList;
 
-        public PanScreenHandler(SButton[] panScreenScrollLeft, SButton[] panScreenScrollRight, SButton[] panScreenScrollUp, SButton[] panScreenScrollDown, SButton[] panScreenPreviousBuilding, SButton[] panScreenNextBuilding, IReflectionHelper reflectionHelper)
+        public PanScreenHandler(SButton[] panScreenScrollLeft, SButton[] panScreenScrollRight,
+            SButton[] panScreenScrollUp, SButton[] panScreenScrollDown, SButton[] panScreenPreviousBuilding,
+            SButton[] panScreenNextBuilding)
         {
             PanScreenScrollLeft = panScreenScrollLeft;
             PanScreenScrollRight = panScreenScrollRight;
@@ -29,13 +31,11 @@ namespace AdvancedKeyBindings.KeyHandlers
             PanScreenScrollDown = panScreenScrollDown;
             PanScreenPreviousBuilding = panScreenPreviousBuilding;
             PanScreenNextBuilding = panScreenNextBuilding;
-            _reflectionHelper = reflectionHelper;
         }
 
         public bool ReceiveButtonPress(SButton input)
         {
-
-            if (HasSupportedMenu())
+            if (CanPan())
             {
                 if (HandlePanning(input))
                 {
@@ -43,10 +43,86 @@ namespace AdvancedKeyBindings.KeyHandlers
                 }
             }
 
-            if (Game1.activeClickableMenu is PurchaseAnimalsMenu menu)
+            if (Game1.activeClickableMenu is CarpenterMenu carpenterMenu)
             {
-                if (HandleAnimalPlacement(input, menu.GetAnimalBeingPurchased()))
+                if (carpenterMenu.IsUpgradingPlacementMode())
+                {
+                    _currentBuildingList = carpenterMenu.CurrentBlueprint.GetUpgradeableBuildings();
 
+                    if (HandleBuildingSelection(input))
+                    {
+                        return true;
+                    }
+                }
+
+                if (carpenterMenu.IsDemolishingPlacementMode())
+                {
+                    _currentBuildingList = Game1.getFarm().GetDemolishableBuildings();
+
+                    if (HandleBuildingSelection(input))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            if (Game1.activeClickableMenu is PurchaseAnimalsMenu menu && menu.IsAnimalPlacementMode())
+            {
+                _currentBuildingList = menu.GetAnimalBeingPurchased().GetPossibleHomeBuildings();
+
+                if (HandleBuildingSelection(input))
+                {
+                    return true;
+                }
+            }
+
+            if (Game1.activeClickableMenu is AnimalQueryMenu animalQueryMenu && animalQueryMenu.IsAnimalPlacementMode())
+            {
+                _currentBuildingList = animalQueryMenu.GetAnimal().GetPossibleHomeBuildings();
+
+                if (HandleBuildingSelection(input))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool HandleBuildingSelection(SButton input)
+        {
+            if (PanScreenPreviousBuilding.Contains(input))
+            {
+                PreviousBuilding();
+
+                _currentlySelectedBuilding?.PanToBuilding(true, true);
+                return true;
+            }
+
+            if (PanScreenNextBuilding.Contains(input))
+            {
+                NextBuilding();
+                _currentlySelectedBuilding?.PanToBuilding(true, true);
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool CanPan()
+        {
+            if (Game1.activeClickableMenu is PurchaseAnimalsMenu animalsMenu)
+            {
+                if (animalsMenu.IsAnimalPlacementMode())
+                {
+                    return true;
+                }
+            }
+
+            if (Game1.activeClickableMenu is CarpenterMenu carpenterMenu)
+            {
+                if (carpenterMenu.InPlacementMode())
                 {
                     return true;
                 }
@@ -54,62 +130,37 @@ namespace AdvancedKeyBindings.KeyHandlers
 
             if (Game1.activeClickableMenu is AnimalQueryMenu animalQueryMenu)
             {
-                if (animalQueryMenu.BeingPlaced() && HandleAnimalPlacement(input, animalQueryMenu.GetAnimal()))
+                if (animalQueryMenu.IsAnimalPlacementMode())
                 {
                     return true;
                 }
             }
-            return false;
-        }
-
-        private bool HandleAnimalPlacement(SButton input, FarmAnimal animal)
-        {
-            if (PanScreenPreviousBuilding.Contains(input))
-            {
-                PreviousBuilding(animal);
-                
-                _currentBuilding?.PanToBuilding(true, true);
-                return true;
-            }
-
-            if (PanScreenNextBuilding.Contains(input))
-            {
-                NextBuilding(animal);
-                _currentBuilding?.PanToBuilding(true, true);
-
-                return true;
-            }
 
             return false;
-        }
-
-        private bool HasSupportedMenu()
-        {
-            return Game1.activeClickableMenu is PurchaseAnimalsMenu ||
-                Game1.activeClickableMenu is CarpenterMenu;
         }
 
         private bool HandlePanning(SButton input)
         {
             var panSize = Game1.pixelZoom * 16 * 10;
+
             if (PanScreenScrollLeft.Contains(input))
             {
                 SmoothPanningHelper.GetInstance().RelativePanTo(-panSize, 0);
                 return true;
             }
-                
+
             if (PanScreenScrollRight.Contains(input))
             {
                 SmoothPanningHelper.GetInstance().RelativePanTo(panSize, 0);
                 return true;
             }
-                
+
             if (PanScreenScrollUp.Contains(input))
             {
                 SmoothPanningHelper.GetInstance().RelativePanTo(0, -panSize);
                 return true;
             }
-                
+
             if (PanScreenScrollDown.Contains(input))
             {
                 SmoothPanningHelper.GetInstance().RelativePanTo(0, panSize);
@@ -119,58 +170,56 @@ namespace AdvancedKeyBindings.KeyHandlers
             return false;
         }
 
-        private void NextBuilding(FarmAnimal animal)
+        private void NextBuilding()
         {
-            var possibleBuildings = animal.GetPossibleHomeBuildings();
-            
-            if (possibleBuildings.Count == 0)
+            if (_currentBuildingList.Count == 0)
             {
-                _currentBuilding = null;
+                _currentlySelectedBuilding = null;
                 return;
             }
-            
-            if (_currentBuilding == null)
+
+            if (_currentlySelectedBuilding == null)
             {
-                _currentBuilding = possibleBuildings.First();
+                _currentlySelectedBuilding = _currentBuildingList.First();
             }
             else
             {
-                var buildingIndex = possibleBuildings.IndexOf(_currentBuilding);
+                var buildingIndex = _currentBuildingList.IndexOf(_currentlySelectedBuilding);
                 buildingIndex++;
 
-                if (buildingIndex >= possibleBuildings.Count)
+                if (buildingIndex >= _currentBuildingList.Count)
                 {
                     buildingIndex = 0;
                 }
-                _currentBuilding = possibleBuildings[buildingIndex];
+
+                _currentlySelectedBuilding = _currentBuildingList[buildingIndex];
             }
         }
-        
-        private void PreviousBuilding(FarmAnimal animal)
-        {
-            var possibleBuildings = animal.GetPossibleHomeBuildings();
 
-            if (possibleBuildings.Count == 0)
+        private void PreviousBuilding()
+        {
+            if (_currentBuildingList.Count == 0)
             {
-                _currentBuilding = null;
+                _currentlySelectedBuilding = null;
                 return;
             }
-            
-            if (_currentBuilding == null)
+
+            if (_currentlySelectedBuilding == null)
             {
-                _currentBuilding = possibleBuildings.Last();
+                _currentlySelectedBuilding = _currentBuildingList.Last();
             }
             else
             {
-                var buildingIndex = possibleBuildings.IndexOf(_currentBuilding);
-                
+                var buildingIndex = _currentBuildingList.IndexOf(_currentlySelectedBuilding);
+
                 buildingIndex--;
 
                 if (buildingIndex < 0)
                 {
-                    buildingIndex = possibleBuildings.Count -1;
+                    buildingIndex = _currentBuildingList.Count - 1;
                 }
-                _currentBuilding = possibleBuildings[buildingIndex];
+
+                _currentlySelectedBuilding = _currentBuildingList[buildingIndex];
             }
         }
     }

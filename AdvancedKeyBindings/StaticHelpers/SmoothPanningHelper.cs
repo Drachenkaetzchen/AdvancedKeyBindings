@@ -13,6 +13,8 @@ namespace AdvancedKeyBindings.StaticHelpers
         private bool _currentlyPanning = false;
         private float _panProgress;
         private static SmoothPanningHelper _smoothPanningHelperInstance;
+
+        private Action _afterPanCallback;
         
         private SmoothPanningHelper(IModHelper helper)
         {
@@ -25,6 +27,7 @@ namespace AdvancedKeyBindings.StaticHelpers
             _sourceCoordinate = new Vector2(Game1.viewport.X, Game1.viewport.Y);
             _panProgress = 0;
             _currentlyPanning = true;
+            _afterPanCallback = null;
         }
         
         public void AbsolutePanTo(int x, int y)
@@ -33,6 +36,13 @@ namespace AdvancedKeyBindings.StaticHelpers
             _sourceCoordinate = new Vector2(Game1.viewport.X, Game1.viewport.Y);
             _panProgress = 0;
             _currentlyPanning = true;
+            _afterPanCallback = null;
+        }
+
+        public void AbsolutePanTo(int x, int y, Action callback)
+        {
+            AbsolutePanTo(x,y);
+            _afterPanCallback = callback;
         }
         
         
@@ -40,18 +50,27 @@ namespace AdvancedKeyBindings.StaticHelpers
         {
             if (_currentlyPanning)
             {
+                var doCallback = false;
                 _panProgress += 0.1f;
                 
                 if (_panProgress >= 1)
                 {
                     _panProgress = 1;
                     _currentlyPanning = false;
+                    doCallback = true;
                 }
                 
                 var foo = Vector2.SmoothStep(_sourceCoordinate, _targetCoordinate, _panProgress);
                
                 
                 PanScreen((int) foo.X, (int) foo.Y);
+
+                if (doCallback)
+                {
+                    _afterPanCallback?.Invoke();
+
+                    _afterPanCallback = null;
+                }
 
             }
         }

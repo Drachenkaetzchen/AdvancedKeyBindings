@@ -9,7 +9,7 @@ Currently implemented key bindings:
 
 # How to use
 - Start the game
-- Open the config.json file and adjust the keys
+- Open the `config.json` file and adjust the keys (see [key bindings](https://stardewvalleywiki.com/Modding:Key_bindings)
 
 # Contribute
 - Add bug reports and feature requests to the GitHub project page﻿﻿.

@@ -42,9 +42,12 @@
     <Compile Include="Config\ModConfig.cs" />
     <Compile Include="Config\ModConfigKeys.cs" />
     <Compile Include="Config\ModConfigRawKeys.cs" />
+    <Compile Include="Extensions\BluePrintExtension.cs" />
     <Compile Include="Extensions\BuildingExtension.cs" />
     <Compile Include="Extensions\FarmAnimalExtension.cs" />
+    <Compile Include="Extensions\FarmExtension.cs" />
     <Compile Include="Extensions\MenuExtensions\AnimalQueryWindowExtension.cs" />
+    <Compile Include="Extensions\MenuExtensions\CarpenterMenuExtension.cs" />
     <Compile Include="Extensions\MenuExtensions\PurchaseAnimalsMenuExtension.cs" />
     <Compile Include="KeyHandlers\ChestKeyHandler.cs" />
     <Compile Include="KeyHandlers\IKeyHandler.cs" />

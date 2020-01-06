@@ -33,7 +33,7 @@ namespace AdvancedKeyBindings
             {
                 new ChestKeyHandler(Keys.AddToExistingStacks),
                 new PanScreenHandler(Keys.PanScreenScrollLeft, Keys.PanScreenScrollRight, Keys.PanScreenScrollUp, Keys.PanScreenScrollDown, Keys.PanScreenPreviousBuilding,
-                    Keys.PanScreenNextBuilding, helper.Reflection)
+                    Keys.PanScreenNextBuilding)
             };
         }
 

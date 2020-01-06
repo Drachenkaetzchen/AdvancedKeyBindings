@@ -23,7 +23,7 @@ namespace AdvancedKeyBindings.Extensions.MenuExtensions
         /// </summary>
         /// <param name="menu"></param>
         /// <returns></returns>
-        public static bool BeingPlaced(this AnimalQueryMenu menu)
+        public static bool IsAnimalPlacementMode(this AnimalQueryMenu menu)
         {
             var reflector = StaticReflectionHelper.GetInstance().GetReflector();
             
